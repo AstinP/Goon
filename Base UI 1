@@ -1,0 +1,13 @@
+import easygui
+
+choice = easygui.buttonbox("What would you like to do?", 
+                          choices=["Add Movie", "View Movies", "Search", "Exit"])
+
+if choice == "Add Movie":
+    easygui.msgbox("Add Movie feature would go here")
+elif choice == "View Movies":
+    easygui.msgbox("View Movies feature would go here")
+elif choice == "Search":
+    easygui.msgbox("Search feature would go here")
+elif choice == "Exit":
+    easygui.msgbox("Goodbye!")
