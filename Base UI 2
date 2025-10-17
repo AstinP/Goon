@@ -1,0 +1,13 @@
+import easygui
+
+title = "Movie Manager"
+choice = easygui.enterbox("Main Menu\n\n1. Show All\n2. New Entry\n3. Find Movie\n4. Quit\n\nEnter choice (1-4):", title)
+
+if choice == "1":
+    easygui.msgbox("Movie list will appear here")
+elif choice == "2":
+    easygui.msgbox("Add movie form opens here")
+elif choice == "3":
+    easygui.msgbox("Search function activates here")
+elif choice == "4":
+    easygui.msgbox("Closing application")
