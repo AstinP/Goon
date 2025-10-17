@@ -1,0 +1,34 @@
+import easygui
+
+title = "🎬 Movie Database Pro"
+msg = """╔═══════════════════════════════╗
+     MOVIE DATABASE MANAGER
+╚═══════════════════════════════╝
+
+Please select an option:"""
+
+choices = ["📥 Add New Movie", "📋 View All Movies", 
+           "🔍 Search Movies", "🚪 Exit"]
+
+choice = easygui.buttonbox(msg, title, choices=choices)
+
+if choice == "📥 Add New Movie":
+    easygui.msgbox("""✨ Add New Movie ✨
+    
+Ready to add a new movie to your collection!""", "Add Movie")
+    
+elif choice == "📋 View All Movies":
+    easygui.msgbox("""🎞️  Movie Collection 🎞️
+    
+Displaying your complete movie library...""", "View Movies")
+    
+elif choice == "🔍 Search Movies":
+    easygui.msgbox("""🔎 Advanced Search 🔍
+    
+Search through your movie database...""", "Search Movies")
+    
+elif choice == "🚪 Exit":
+    easygui.msgbox("""🌟 Thank You! 🌟
+    
+Thank you for using Movie Database Pro!
+Goodbye! 👋""", "Exit Program")
