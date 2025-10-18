@@ -1,0 +1,205 @@
+import easygui
+import sqlite3
+import os
+
+# Create or connect to SQLite database using your table structure
+def setup_database():
+    conn = sqlite3.connect('Movies.db')
+    cursor = conn.cursor()
+    
+    # Create MovieDB table matching your design
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS MovieDB (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            Movie_Name TEXT NOT NULL,
+            Release_Date INTEGER,
+            Age_Rating TEXT,
+            Duration INTEGER,
+            Genre TEXT
+        )
+    ''')
+    
+    # Check if we need to import from films.txt
+    cursor.execute("SELECT COUNT(*) FROM MovieDB")
+    count = cursor.fetchone()[0]
+    
+    if count == 0 and os.path.exists('films.txt'):
+        # Import movies from films.txt
+        try:
+            with open('films.txt', 'r') as file:
+                movies_imported = 0
+                for line in file:
+                    data = line.strip().split(',')
+                    if len(data) == 6:
+                        # Skip the Movie_ID from films.txt since we use AUTOINCREMENT
+                        cursor.execute('''
+                            INSERT INTO MovieDB (Movie_Name, Release_Date, Age_Rating, Duration, Genre) 
+                            VALUES (?, ?, ?, ?, ?)
+                        ''', (data[1], int(data[2]), data[3], int(data[4]), data[5]))
+                        movies_imported += 1
+                if movies_imported > 0:
+                    print(f"✅ Imported {movies_imported} movies from films.txt into MovieDB table")
+        except Exception as e:
+            print(f"⚠️ Could not import from films.txt: {e}")
+    
+    conn.commit()
+    conn.close()
+    
+    # Verify the database file was created
+    if os.path.exists('Movies.db'):
+        print("✅ Database file 'Movies.db' created successfully with the 'MovieDB' table")
+    else:
+        print("❌ Database file was not created")
+
+# Add New Movie to database using MovieDB table
+def add_new_movie():
+    movie_name = easygui.enterbox("Enter movie title:", "✨ Add New Movie")
+    if movie_name:
+        release_date = easygui.integerbox("Enter release year:", "✨ Add New Movie", lowerbound=1900, upperbound=2030)
+        if release_date:
+            age_rating = easygui.choicebox("Select age rating:", "✨ Add New Movie", 
+                                         choices=["G", "PG", "PG-13", "R", "NC-17", "18+"])
+            if age_rating:
+                duration = easygui.integerbox("Enter duration (minutes):", "✨ Add New Movie", lowerbound=1, upperbound=300)
+                if duration:
+                    genre = easygui.choicebox("Select genre:", "✨ Add New Movie",
+                                            choices=["Action", "Comedy", "Drama", "Crime", "Sci-Fi", "Horror", "Romance", "Adventure"])
+                    if genre:
+                        conn = sqlite3.connect('Movies.db')
+                        cursor = conn.cursor()
+                        cursor.execute('INSERT INTO MovieDB (Movie_Name, Release_Date, Age_Rating, Duration, Genre) VALUES (?, ?, ?, ?, ?)',
+                                     (movie_name, release_date, age_rating, duration, genre))
+                        conn.commit()
+                        conn.close()
+                        easygui.msgbox(f"✅ Movie '{movie_name}' added successfully!", "✨ Add New Movie")
+
+# View All Movies from MovieDB table
+def view_all_movies():
+    conn = sqlite3.connect('Movies.db')
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM MovieDB")
+    movies = cursor.fetchall()
+    conn.close()
+    
+    if not movies:
+        easygui.msgbox("No movies found in the database.", "🎞️ View All Movies")
+        return
+    
+    movie_list = "🎬 YOUR MOVIE COLLECTION 🎬\n"
+    movie_list += "╔════════════════════════════════════════╗\n"
+    movie_list += f"           ALL MOVIES ({len(movies)})\n"
+    movie_list += "╚════════════════════════════════════════╝\n\n"
+    
+    for movie in movies:
+        movie_list += f"▸ {movie[1]} ({movie[2]}) - {movie[5]} - {movie[4]}min - Rated: {movie[3]}\n"
+    
+    movie_list += f"\n─────────────────────────────\n"
+    movie_list += f"Total movies: {len(movies)}\n"
+    
+    easygui.msgbox(movie_list, "🎞️ View All Movies")
+
+# Search Movies in MovieDB table
+def search_movies():
+    search_term = easygui.enterbox("Enter movie title to search:", "🔍 Search Movies")
+    if search_term:
+        conn = sqlite3.connect('Movies.db')
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT * FROM MovieDB WHERE Movie_Name LIKE ?", (f'%{search_term}%',))
+        results = cursor.fetchall()
+        conn.close()
+        
+        if not results:
+            message = f"""🔍 SEARCH RESULTS: '{search_term}'
+╔═══════════════════════════════╗
+        NO MOVIES FOUND
+╚═══════════════════════════════╝
+
+No movies found matching: '{search_term}'
+Try a different search term."""
+        else:
+            message = f"""🔍 SEARCH RESULTS: '{search_term}'
+╔═══════════════════════════════╗
+       FOUND {len(results)} MOVIES
+╚═══════════════════════════════╝\n"""
+            
+            for movie in results:
+                message += f"▸ {movie[1]} ({movie[2]}) - {movie[5]} - {movie[4]}min - Rated: {movie[3]}\n"
+            
+            message += f"\n─────────────────────────────\n"
+            message += f"Found {len(results)} matches for '{search_term}'"
+        
+        easygui.msgbox(message, "🔍 Search Results")
+
+# Verify database and table structure
+def verify_database():
+    """Check if the database and table are properly set up"""
+    if not os.path.exists('Movies.db'):
+        print("❌ Movies.db file does not exist")
+        return False
+    
+    conn = sqlite3.connect('Movies.db')
+    cursor = conn.cursor()
+    
+    # Check if MovieDB table exists
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='MovieDB'")
+    table_exists = cursor.fetchone()
+    
+    if table_exists:
+        # Check table structure
+        cursor.execute("PRAGMA table_info(MovieDB)")
+        columns = cursor.fetchall()
+        print("✅ Table 'MovieDB' exists with columns:")
+        for col in columns:
+            print(f"   - {col[1]} ({col[2]})")
+    else:
+        print("❌ Table 'MovieDB' does not exist")
+    
+    # Count movies
+    cursor.execute("SELECT COUNT(*) FROM MovieDB")
+    count = cursor.fetchone()[0]
+    print(f"📊 Total movies in database: {count}")
+    
+    conn.close()
+    return table_exists is not None
+
+# Main program
+print("🚀 Starting Movie Database Pro...")
+setup_database()
+verify_database()
+
+title = "🎬 Movie Database Pro"
+msg = """╔═══════════════════════════════╗
+    MOVIE DATABASE MANAGER
+╚═══════════════════════════════╝
+
+─────────────────────────────
+    Please select an option:
+─────────────────────────────"""
+
+choices = ["📥 Add New Movie", "📋 View All Movies", 
+           "🔍 Search Movies", "🚪 Exit"]
+
+image = "Logo.png"
+
+while True:
+    choice = easygui.buttonbox(msg, title, image=image, choices=choices)
+
+    if choice == "📥 Add New Movie":
+        add_new_movie()
+        
+    elif choice == "📋 View All Movies":
+        view_all_movies()
+        
+    elif choice == "🔍 Search Movies":
+        search_movies()
+        
+    elif choice == "🚪 Exit":
+        easygui.msgbox("""───────────────
+🌟 Thank You! 🌟
+───────────────
+
+Thank you for using Movie Database Pro!
+Goodbye! 👋""", "Exit Program")
+        break
