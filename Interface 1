@@ -1,0 +1,84 @@
+import easygui
+import sqlite3
+
+# Create or connect to SQLite database using your table structure
+def setup_database():
+    conn = sqlite3.connect('Movies.db')
+    cursor = conn.cursor()
+    
+    # Create movies table matching your design
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS movies (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            Movie_Name TEXT NOT NULL,
+            Release_Date INTEGER,
+            Age_Rating TEXT,
+            Duration INTEGER,
+            Genre TEXT
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+
+# Add New Movie to database using your table structure
+def add_new_movie():
+    movie_name = easygui.enterbox("Enter movie title:", "✨ Add New Movie")
+    if movie_name:
+        release_date = easygui.integerbox("Enter release year:", "✨ Add New Movie", lowerbound=1900, upperbound=2030)
+        if release_date:
+            age_rating = easygui.choicebox("Select age rating:", "✨ Add New Movie", 
+                                         choices=["G", "PG", "PG-13", "R", "NC-17", "18+"])
+            if age_rating:
+                duration = easygui.integerbox("Enter duration (minutes):", "✨ Add New Movie", lowerbound=1, upperbound=300)
+                if duration:
+                    genre = easygui.choicebox("Select genre:", "✨ Add New Movie",
+                                            choices=["Action", "Comedy", "Drama", "Crime", "Sci-Fi", "Horror", "Romance", "Adventure"])
+                    if genre:
+                        conn = sqlite3.connect('movies.db')
+                        cursor = conn.cursor()
+                        cursor.execute('INSERT INTO movies (Movie_Name, Release_Date, Age_Rating, Duration, Genre) VALUES (?, ?, ?, ?, ?)',
+                                     (movie_name, release_date, age_rating, duration, genre))
+                        conn.commit()
+                        conn.close()
+                        easygui.msgbox(f"✅ Movie '{movie_name}' added successfully!", "✨ Add New Movie")
+
+# Main program
+setup_database()
+
+title = "🎬 Movie Database Pro"
+msg = """╔═══════════════════════════════╗
+    MOVIE DATABASE MANAGER
+╚═══════════════════════════════╝
+
+─────────────────────────────
+    Please select an option:
+─────────────────────────────"""
+
+choices = ["📥 Add New Movie", "📋 View All Movies", 
+           "🔍 Search Movies", "🚪 Exit"]
+
+image = "Logo.png"
+
+while True:
+    choice = easygui.buttonbox(msg, title, image=image, choices=choices)
+
+    if choice == "📥 Add New Movie":
+        add_new_movie()
+        
+    elif choice == "📋 View All Movies":
+        easygui.msgbox("Displaying all movies...", "View Movies")
+        
+    elif choice == "🔍 Search Movies":
+        easygui.msgbox("Search function coming soon...", "Search Movies")
+        
+    elif choice == "🚪 Exit":
+        easygui.msgbox("""───────────────
+🌟 Thank You! 🌟
+───────────────
+
+Thank you for using Movie Database Pro!
+Goodbye! 👋""", "Exit Program")
+        break
+
+    
